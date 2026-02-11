@@ -5,12 +5,58 @@ const feedback = document.getElementById("feedback");
 const remainingCount = document.getElementById("remainingCount");
 const drawButton = document.getElementById("drawButton");
 const resetButton = document.getElementById("resetButton");
+const themeToggle = document.getElementById("themeToggle");
 const drawnList = document.getElementById("drawnList");
+const mainTitle = document.getElementById("mainTitle");
+const subtitle = document.getElementById("subtitle");
+const historyTitle = document.getElementById("historyTitle");
 
 let drawnNumbers = [];
 let isDrawing = false;
+let currentTheme = "lunar";
 
 const easeOutQuart = (x) => 1 - Math.pow(1 - x, 4);
+
+const themeConfig = {
+  lunar: {
+    title: "🧧 新春好運抽獎機 🧧",
+    subtitle: "紅色喜氣主題、金色點綴、開春抽出好彩頭！",
+    drawText: "🧨 開始抽獎",
+    resetText: "🏮 重置",
+    historyText: "🧮 已抽出號碼",
+    toggleText: "🌌 切換銀河版",
+    particles: ["🧧", "🎊", "🏮", "✨", "🐉", "🪙"],
+  },
+  galaxy: {
+    title: "✨ 星空幸運抽獎機 ✨",
+    subtitle: "銀河星空主題、流暢動畫、閃耀抽出幸運號碼！",
+    drawText: "🎰 開始抽獎",
+    resetText: "♻️ 重置",
+    historyText: "📋 已抽出號碼",
+    toggleText: "🧧 切換新春版",
+    particles: ["🎉", "✨", "🎊", "🌟", "💫", "🍀"],
+  },
+};
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  document.body.dataset.theme = theme;
+  const config = themeConfig[theme];
+
+  mainTitle.textContent = config.title;
+  subtitle.textContent = config.subtitle;
+  drawButton.textContent = config.drawText;
+  resetButton.textContent = config.resetText;
+  historyTitle.textContent = config.historyText;
+  themeToggle.textContent = config.toggleText;
+}
+
+function toggleTheme() {
+  const nextTheme = currentTheme === "lunar" ? "galaxy" : "lunar";
+  applyTheme(nextTheme);
+  if (!feedback.textContent) return;
+  setFeedback(`已切換為${nextTheme === "lunar" ? "新春" : "銀河"}主題。`, false);
+}
 
 function getNumberPool() {
   const start = Number(startInput.value);
@@ -52,13 +98,13 @@ function renderDrawnNumbers() {
   drawnNumbers.forEach((number) => {
     const item = document.createElement("li");
     item.textContent = number;
-    item.className = "drawn-item px-3 py-1 rounded-full bg-cyan-300/20 text-cyan-100 border border-cyan-200/30 font-semibold";
+    item.className = "drawn-item draw-chip px-3 py-1 rounded-full font-semibold";
     drawnList.appendChild(item);
   });
 }
 
 function launchParticles() {
-  const emojis = ["🎉", "✨", "🎊", "🌟", "💫", "🍀"];
+  const emojis = themeConfig[currentTheme].particles;
   const originX = window.innerWidth / 2;
   const originY = window.innerHeight * 0.42;
 
@@ -179,5 +225,7 @@ function resetDraw() {
 
 drawButton.addEventListener("click", drawNumber);
 resetButton.addEventListener("click", resetDraw);
+themeToggle.addEventListener("click", toggleTheme);
 
+applyTheme(currentTheme);
 updateRemainingCount();
