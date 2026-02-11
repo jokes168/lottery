@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>互動式抽獎機</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <main class="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-8">
+      <header class="rounded-2xl bg-slate-900/80 p-6 shadow-xl ring-1 ring-slate-700">
+        <h1 class="text-3xl font-bold md:text-4xl">🎉 互動式抽獎機</h1>
+        <p class="mt-2 text-slate-300">使用 HTML + 原生 JavaScript + Tailwind CSS，快速建立你的活動抽獎頁面。</p>
+      </header>
+
+      <section class="grid gap-6 lg:grid-cols-2">
+        <article class="rounded-2xl bg-slate-900 p-6 shadow-lg ring-1 ring-slate-800">
+          <h2 class="text-xl font-semibold">名單設定</h2>
+          <label class="mt-4 block text-sm text-slate-300" for="nameInput">輸入參加者姓名（按 Enter 新增）</label>
+          <div class="mt-2 flex gap-2">
+            <input
+              id="nameInput"
+              type="text"
+              class="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
+              placeholder="例如：王小明"
+            />
+            <button id="addBtn" class="rounded-xl bg-emerald-500 px-4 py-2 font-medium text-slate-950 transition hover:bg-emerald-400">
+              新增
+            </button>
+          </div>
+
+          <div class="mt-4 flex gap-2 text-sm">
+            <button id="fillDemoBtn" class="rounded-lg bg-slate-700 px-3 py-2 transition hover:bg-slate-600">匯入示範名單</button>
+            <button id="clearListBtn" class="rounded-lg bg-rose-500/90 px-3 py-2 text-white transition hover:bg-rose-500">清空名單</button>
+          </div>
+
+          <p class="mt-4 text-sm text-slate-400">目前人數：<span id="totalCount" class="font-semibold text-slate-100">0</span></p>
+
+          <ul id="nameList" class="mt-4 max-h-80 space-y-2 overflow-auto pr-1"></ul>
+        </article>
+
+        <article class="rounded-2xl bg-slate-900 p-6 shadow-lg ring-1 ring-slate-800">
+          <h2 class="text-xl font-semibold">抽獎控制台</h2>
+
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <label class="text-sm text-slate-300">
+              中獎人數
+              <input
+                id="winnerCount"
+                type="number"
+                min="1"
+                value="1"
+                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 focus:border-violet-400 focus:outline-none"
+              />
+            </label>
+            <label class="text-sm text-slate-300">
+              抽獎速度（毫秒）
+              <input
+                id="drawSpeed"
+                type="range"
+                min="60"
+                max="400"
+                step="10"
+                value="120"
+                class="mt-3 w-full accent-violet-400"
+              />
+              <span id="speedText" class="mt-1 block text-xs text-slate-400">120 ms</span>
+            </label>
+          </div>
+
+          <div class="mt-5 flex flex-wrap gap-2">
+            <button id="drawBtn" class="rounded-xl bg-violet-500 px-5 py-2 font-semibold text-white transition hover:bg-violet-400">開始抽獎</button>
+            <button id="resetWinnersBtn" class="rounded-xl bg-slate-700 px-5 py-2 font-semibold transition hover:bg-slate-600">重置中獎結果</button>
+          </div>
+
+          <div class="mt-6 rounded-2xl bg-slate-800/80 p-5">
+            <p class="text-sm text-slate-400">滾動中</p>
+            <p id="rollingName" class="mt-1 min-h-10 text-3xl font-black tracking-wide text-amber-300">準備開始...</p>
+          </div>
+
+          <div class="mt-4 rounded-2xl bg-slate-800/60 p-5">
+            <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300">中獎名單</h3>
+            <ol id="winnerList" class="mt-3 list-inside list-decimal space-y-1 text-lg"></ol>
+          </div>
+
+          <p id="message" class="mt-4 text-sm text-slate-300"></p>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      const state = {
+        participants: [],
+        winners: [],
+        rollingTimer: null,
+        isDrawing: false,
+      };
+
+      const elements = {
+        nameInput: document.getElementById('nameInput'),
+        addBtn: document.getElementById('addBtn'),
+        fillDemoBtn: document.getElementById('fillDemoBtn'),
+        clearListBtn: document.getElementById('clearListBtn'),
+        totalCount: document.getElementById('totalCount'),
+        nameList: document.getElementById('nameList'),
+        winnerCount: document.getElementById('winnerCount'),
+        drawSpeed: document.getElementById('drawSpeed'),
+        speedText: document.getElementById('speedText'),
+        drawBtn: document.getElementById('drawBtn'),
+        resetWinnersBtn: document.getElementById('resetWinnersBtn'),
+        rollingName: document.getElementById('rollingName'),
+        winnerList: document.getElementById('winnerList'),
+        message: document.getElementById('message'),
+      };
+
+      function setMessage(text, type = 'info') {
+        const colorMap = {
+          info: 'text-slate-300',
+          success: 'text-emerald-300',
+          warning: 'text-amber-300',
+          error: 'text-rose-300',
+        };
+        elements.message.className = `mt-4 text-sm ${colorMap[type] || colorMap.info}`;
+        elements.message.textContent = text;
+      }
+
+      function sanitizeName(name) {
+        return name.trim().replace(/\s+/g, ' ');
+      }
+
+      function updateParticipantView() {
+        elements.totalCount.textContent = String(state.participants.length);
+        elements.nameList.innerHTML = '';
+
+        state.participants.forEach((name, index) => {
+          const li = document.createElement('li');
+          li.className = 'flex items-center justify-between rounded-lg bg-slate-800 px-3 py-2 text-sm';
+          li.innerHTML = `<span>${index + 1}. ${name}</span>`;
+
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.textContent = '移除';
+          removeBtn.className = 'rounded-md bg-rose-500/80 px-2 py-1 text-xs text-white transition hover:bg-rose-500';
+          removeBtn.addEventListener('click', () => {
+            state.participants = state.participants.filter((_, i) => i !== index);
+            state.winners = state.winners.filter((winner) => winner !== name);
+            updateParticipantView();
+            updateWinnerView();
+          });
+
+          li.appendChild(removeBtn);
+          elements.nameList.appendChild(li);
+        });
+      }
+
+      function updateWinnerView() {
+        elements.winnerList.innerHTML = '';
+        state.winners.forEach((winner) => {
+          const li = document.createElement('li');
+          li.textContent = winner;
+          li.className = 'font-semibold text-emerald-300';
+          elements.winnerList.appendChild(li);
+        });
+      }
+
+      function addParticipant() {
+        const name = sanitizeName(elements.nameInput.value);
+        if (!name) {
+          setMessage('請先輸入姓名。', 'warning');
+          return;
+        }
+        if (state.participants.includes(name)) {
+          setMessage('名單中已有相同姓名。', 'warning');
+          return;
+        }
+        state.participants.push(name);
+        elements.nameInput.value = '';
+        updateParticipantView();
+        setMessage(`已新增：${name}`, 'success');
+      }
+
+      function pickRandomName(pool) {
+        const index = Math.floor(Math.random() * pool.length);
+        return pool[index];
+      }
+
+      async function startDraw() {
+        if (state.isDrawing) return;
+
+        const count = Number(elements.winnerCount.value);
+        if (!Number.isInteger(count) || count <= 0) {
+          setMessage('中獎人數需為正整數。', 'error');
+          return;
+        }
+
+        const candidatePool = state.participants.filter((name) => !state.winners.includes(name));
+        if (candidatePool.length === 0) {
+          setMessage('沒有可抽取的參加者，請先新增名單或重置結果。', 'warning');
+          return;
+        }
+
+        const actualCount = Math.min(count, candidatePool.length);
+        if (actualCount < count) {
+          setMessage(`剩餘名單不足 ${count} 位，將抽出 ${actualCount} 位。`, 'warning');
+        }
+
+        state.isDrawing = true;
+        elements.drawBtn.disabled = true;
+        elements.drawBtn.classList.add('opacity-60', 'cursor-not-allowed');
+
+        const speed = Number(elements.drawSpeed.value);
+        const localPool = [...candidatePool];
+        const newWinners = [];
+
+        for (let i = 0; i < actualCount; i += 1) {
+          await new Promise((resolve) => {
+            let ticks = 0;
+            state.rollingTimer = setInterval(() => {
+              const rolling = pickRandomName(localPool);
+              elements.rollingName.textContent = rolling;
+              ticks += 1;
+              if (ticks >= 14) {
+                clearInterval(state.rollingTimer);
+                const winner = pickRandomName(localPool);
+                const removeIndex = localPool.indexOf(winner);
+                if (removeIndex !== -1) {
+                  localPool.splice(removeIndex, 1);
+                }
+                newWinners.push(winner);
+                elements.rollingName.textContent = `🎊 ${winner}`;
+                resolve();
+              }
+            }, speed);
+          });
+        }
+
+        state.winners = [...state.winners, ...newWinners];
+        updateWinnerView();
+        setMessage(`恭喜 ${newWinners.join('、')} 中獎！`, 'success');
+
+        state.isDrawing = false;
+        elements.drawBtn.disabled = false;
+        elements.drawBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+      }
+
+      function resetWinners() {
+        if (state.isDrawing) {
+          setMessage('抽獎進行中，請稍候。', 'warning');
+          return;
+        }
+        state.winners = [];
+        updateWinnerView();
+        elements.rollingName.textContent = '準備開始...';
+        setMessage('已重置中獎結果。', 'info');
+      }
+
+      elements.addBtn.addEventListener('click', addParticipant);
+      elements.nameInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') addParticipant();
+      });
+      elements.fillDemoBtn.addEventListener('click', () => {
+        state.participants = ['王小明', '陳小華', '林怡君', '黃志豪', '李佩珊', '張育誠', '吳佳玲', '趙子涵'];
+        state.winners = [];
+        updateParticipantView();
+        updateWinnerView();
+        setMessage('已匯入示範名單。', 'info');
+      });
+      elements.clearListBtn.addEventListener('click', () => {
+        if (state.isDrawing) {
+          setMessage('抽獎進行中，無法清空名單。', 'warning');
+          return;
+        }
+        state.participants = [];
+        state.winners = [];
+        updateParticipantView();
+        updateWinnerView();
+        elements.rollingName.textContent = '準備開始...';
+        setMessage('已清空所有資料。', 'info');
+      });
+      elements.drawBtn.addEventListener('click', startDraw);
+      elements.resetWinnersBtn.addEventListener('click', resetWinners);
+      elements.drawSpeed.addEventListener('input', () => {
+        elements.speedText.textContent = `${elements.drawSpeed.value} ms`;
+      });
+
+      updateParticipantView();
+      setMessage('請先建立抽獎名單。', 'info');
+    </script>
+  </body>
+</html>
