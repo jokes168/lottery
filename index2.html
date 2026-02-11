@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>星空幸運抽獎機</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="min-h-screen text-white overflow-x-hidden">
+    <div id="stars"></div>
+    <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
+      <main class="w-full max-w-4xl bg-slate-900/70 backdrop-blur-md border border-slate-300/20 rounded-3xl p-6 md:p-8 shadow-2xl">
+        <header class="text-center mb-6">
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-wide">✨ 星空幸運抽獎機 ✨</h1>
+          <p class="text-slate-200 mt-3">自訂範圍、流暢動畫、粒子慶祝，一次滿足！</p>
+        </header>
+
+        <section class="grid md:grid-cols-2 gap-4 mb-6">
+          <label class="block">
+            <span class="text-sm text-slate-200">起始號碼</span>
+            <input id="startNumber" type="number" value="2" class="mt-1 w-full rounded-xl bg-slate-950/60 border border-slate-400/30 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300" />
+          </label>
+          <label class="block">
+            <span class="text-sm text-slate-200">結束號碼</span>
+            <input id="endNumber" type="number" value="49" class="mt-1 w-full rounded-xl bg-slate-950/60 border border-slate-400/30 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300" />
+          </label>
+        </section>
+
+        <section class="text-center mb-6">
+          <div id="drawDisplay" class="number-display mx-auto mb-4 flex items-center justify-center text-7xl md:text-8xl font-black rounded-3xl bg-slate-950/70 border border-cyan-300/40 shadow-inner shadow-cyan-200/10">--</div>
+          <div id="feedback" class="h-7 text-amber-200 text-sm font-semibold" aria-live="polite"></div>
+          <div class="text-slate-200 mt-2">剩餘號碼：<span id="remainingCount" class="font-bold text-cyan-200">0</span></div>
+        </section>
+
+        <section class="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+          <button id="drawButton" class="rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-8 py-3 font-bold text-slate-900 hover:brightness-110 active:scale-95 transition">
+            🎰 開始抽獎
+          </button>
+          <button id="resetButton" class="rounded-xl bg-slate-100/90 text-slate-900 px-8 py-3 font-bold hover:bg-white active:scale-95 transition">
+            ♻️ 重置
+          </button>
+        </section>
+
+        <section class="bg-slate-950/50 border border-slate-400/20 rounded-2xl p-4">
+          <h2 class="text-lg font-bold mb-3">📋 已抽出號碼</h2>
+          <ul id="drawnList" class="flex flex-wrap gap-2 min-h-12"></ul>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

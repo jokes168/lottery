@@ -1,0 +1,109 @@
+:root {
+  color-scheme: dark;
+}
+
+body {
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  background-color: #020617;
+}
+
+#stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(2, 6, 23, 0.62), rgba(2, 6, 23, 0.7)),
+    url("https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=80");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  animation: galaxy-pan 28s ease-in-out infinite alternate;
+}
+
+#stars::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, #fff, transparent),
+    radial-gradient(1px 1px at 75% 10%, #f0f9ff, transparent),
+    radial-gradient(1.5px 1.5px at 45% 80%, #dbeafe, transparent),
+    radial-gradient(2px 2px at 85% 60%, #fef3c7, transparent),
+    radial-gradient(1px 1px at 60% 40%, #ffffff, transparent);
+  animation: twinkle 7s linear infinite;
+}
+
+@keyframes galaxy-pan {
+  0% {
+    transform: scale(1) translate3d(0, 0, 0);
+    filter: saturate(1.05);
+  }
+  100% {
+    transform: scale(1.08) translate3d(-1.5%, -1%, 0);
+    filter: saturate(1.2);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.number-display {
+  width: min(100%, 360px);
+  height: 180px;
+  transition: transform 220ms ease;
+}
+
+.number-display.stop {
+  animation: pop 380ms ease-out;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.9);
+  }
+  45% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.particle {
+  position: fixed;
+  pointer-events: none;
+  font-size: 1.5rem;
+  z-index: 40;
+  animation: burst var(--duration, 1.2s) ease-out forwards;
+}
+
+@keyframes burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.9) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) scale(1.25) rotate(var(--r));
+  }
+}
+
+.drawn-item {
+  transform: translateY(8px);
+  opacity: 0;
+  animation: slide-in 300ms ease-out forwards;
+}
+
+@keyframes slide-in {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
